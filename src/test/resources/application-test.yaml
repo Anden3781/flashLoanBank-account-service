@@ -1,0 +1,14 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test_db
+  config:
+    enabled: false
+
+customer:
+  service:
+    url: http://localhost:8081
+
+eureka:
+  client:
+    enabled: false

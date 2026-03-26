@@ -51,6 +51,7 @@ class AccountManagementServiceTest {
         when(creditPort.hasOverdueDebt(customerId)).thenReturn(Single.just(false));
         when(customerPort.getCustomerType(customerId)).thenReturn(Maybe.just(CustomerType.BUSINESS));
         when(cardPort.hasCreditCard(customerId)).thenReturn(Single.just(true));
+        when(accountPort.countByCustomerIdAndType(anyString(), any(AccountType.class))).thenReturn(Single.just(0L));
         when(accountPort.save(any(Account.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
 
         // Act
@@ -71,6 +72,7 @@ class AccountManagementServiceTest {
         when(creditPort.hasOverdueDebt(customerId)).thenReturn(Single.just(false));
         when(customerPort.getCustomerType(customerId)).thenReturn(Maybe.just(CustomerType.BUSINESS));
         when(cardPort.hasCreditCard(customerId)).thenReturn(Single.just(false));
+        when(accountPort.countByCustomerIdAndType(anyString(), any(AccountType.class))).thenReturn(Single.just(0L));
         when(accountPort.save(any(Account.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
 
         // Act
@@ -81,6 +83,26 @@ class AccountManagementServiceTest {
         CheckingAccount checking = (CheckingAccount) result;
         assertFalse(checking.getIsPyme());
         assertEquals(new BigDecimal("15.00"), checking.getMonthlyMaintenanceFee());
+        verify(accountPort).save(any(Account.class));
+    }
+
+    @Test
+    void createCheckingAccount_PersonalCustomer_ShouldHaveFee() {
+        // Arrange
+        String customerId = "cust-456";
+        when(creditPort.hasOverdueDebt(customerId)).thenReturn(Single.just(false));
+        when(customerPort.getCustomerType(customerId)).thenReturn(Maybe.just(CustomerType.PERSONAL));
+        when(accountPort.countByCustomerIdAndType(anyString(), any(AccountType.class))).thenReturn(Single.just(0L));
+        when(accountPort.save(any(Account.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        // Act
+        Account result = accountService.createCheckingAccount(customerId, BigDecimal.ZERO).blockingGet();
+
+        // Assert
+        assertTrue(result instanceof CheckingAccount);
+        CheckingAccount checking = (CheckingAccount) result;
+        assertFalse(checking.getIsPyme());
+        verify(accountPort).save(any(Account.class));
     }
 
     @Test
@@ -88,6 +110,7 @@ class AccountManagementServiceTest {
         // Arrange
         String customerId = "cust-123";
         when(creditPort.hasOverdueDebt(customerId)).thenReturn(Single.just(true));
+        when(customerPort.getCustomerType(anyString())).thenReturn(Maybe.just(CustomerType.PERSONAL));
 
         // Act & Assert
         assertThrows(BusinessRuleException.class, () -> 
