@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Account Service API - FlashLoan Bank
+  version: 1.0.0
+  description: API reactiva para la gestión de cuentas bancarias (Ahorro, Corriente, Plazo Fijo). Incluye lógica para perfiles VIP y PYME.
+
+servers:
+  - url: /api/v1/accounts
+    description: Account Service context path
+
+paths:
+  / :
+    post:
+      summary: Crear una nueva cuenta bancaria
+      description: Permite crear cuentas de Ahorro, Corriente o Plazo Fijo. Valida deuda vencida y requisitos de perfiles VIP/PYME.
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequestDto'
+      responses:
+        '201':
+          description: Cuenta creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '400':
+          description: Error de validación de negocio (ej. deuda vencida, límite de cuentas excedido)
+
+    get:
+      summary: Listar todas las cuentas
+      operationId: getAllAccounts
+      responses:
+        '200':
+          description: Lista de cuentas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountResponseDto'
+
+  /{id}:
+    get:
+      summary: Obtener cuenta por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cuenta encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '404':
+          description: Cuenta no encontrada
+
+  /{id}/debit:
+    post:
+      summary: Realizar un débito atómico
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountBalanceOperationRequestDto'
+      responses:
+        '200':
+          description: Débito realizado exitosamente
+        '400':
+          description: Saldo insuficiente o cuenta inválida
+
+  /{id}/credit:
+    post:
+      summary: Realizar un crédito atómico
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountBalanceOperationRequestDto'
+      responses:
+        '200':
+          description: Crédito realizado exitosamente
+
+  /customer/{customerId}:
+    get:
+      summary: Listar cuentas por ID de cliente
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de cuentas del cliente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountResponseDto'
+
+components:
+  schemas:
+    AccountRequestDto:
+      type: object
+      required:
+        - customerId
+        - accountType
+      properties:
+        customerId:
+          type: string
+          example: "CUST-001"
+        accountType:
+          type: string
+          enum: [SAVINGS, CHECKING, FIXED_TERM]
+        initialBalance:
+          type: number
+          format: decimal
+          example: 100.00
+        operatingDay:
+          type: integer
+          description: Solo para cuentas de plazo fijo
+          example: 15
+
+    AccountResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "ACC-123456"
+        customerId:
+          type: string
+          example: "CUST-001"
+        type:
+          type: string
+          enum: [SAVINGS, CHECKING, FIXED_TERM]
+        balance:
+          type: number
+          format: decimal
+          example: 1250.75
+        isVip:
+          type: boolean
+          example: false
+        isPyme:
+          type: boolean
+          example: true
+        monthlyMaintenanceFee:
+          type: number
+          format: decimal
+          example: 0.00
+        createdAt:
+          type: string
+          format: date-time
+
+    AccountBalanceOperationRequestDto:
+      type: object
+      required:
+        - amount
+        - transactionId
+      properties:
+        amount:
+          type: number
+          format: decimal
+          example: 50.00
+        transactionId:
+          type: string
+          example: "tx-987654"
