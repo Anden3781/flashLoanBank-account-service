@@ -67,6 +67,12 @@ public class AccountRepositoryAdapter implements AccountRepositoryPort {
     }
 
     @Override
+    public Flowable<Account> findByCustomerId(String customerId) {
+        return Flowable.fromPublisher(repository.findByCustomerId(customerId))
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Single<Account> atomicDebit(String id, BigDecimal amount, boolean increaseMovementCounter) {
         Query query = Query.query(Criteria.where("id").is(id).and("balance").gte(amount));
         Update update = new Update().inc("balance", amount.negate());
@@ -80,7 +86,7 @@ public class AccountRepositoryAdapter implements AccountRepositoryPort {
                         FindAndModifyOptions.options().returnNew(true),
                         AccountEntity.class
                 )
-        ).switchIfEmpty(Maybe.error(new BusinessRuleException("Atomic debit failed due to insufficient balance or account state")))
+        ).switchIfEmpty(Maybe.error(new BusinessRuleException("Atomic debit failed due to insufficient balance or account state: " + id)))
                 .toSingle()
                 .map(mapper::toDomain);
     }
@@ -99,7 +105,7 @@ public class AccountRepositoryAdapter implements AccountRepositoryPort {
                         FindAndModifyOptions.options().returnNew(true),
                         AccountEntity.class
                 )
-        ).switchIfEmpty(Maybe.error(new BusinessRuleException("Atomic credit failed due to account state")))
+        ).switchIfEmpty(Maybe.error(new BusinessRuleException("Atomic credit failed due to account state: " + id)))
                 .toSingle()
                 .map(mapper::toDomain);
     }

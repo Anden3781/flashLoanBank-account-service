@@ -16,4 +16,5 @@ public interface AccountRepositoryPort {
     Single<Account> atomicDebit(String id, BigDecimal amount, boolean increaseMovementCounter);
     Single<Account> atomicCredit(String id, BigDecimal amount, boolean increaseMovementCounter);
     Maybe<Account> findByCardNumber(String cardNumber);
+    Flowable<Account> findByCustomerId(String customerId);
 }

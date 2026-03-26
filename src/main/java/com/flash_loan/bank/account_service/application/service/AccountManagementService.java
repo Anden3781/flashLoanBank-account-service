@@ -157,6 +157,11 @@ public class AccountManagementService {
         return accountPort.findAll();
     }
 
+    public Flowable<Account> findByCustomerId(String customerId) {
+        log.info("Fetching all accounts for customer: {}", customerId);
+        return accountPort.findByCustomerId(customerId);
+    }
+
     public Single<Account> updateAccount(String id, Account account) {
         return accountPort.findById(id)
                 .switchIfEmpty(Maybe.error(new AccountNotFoundException("Account not found for update: " + id)))

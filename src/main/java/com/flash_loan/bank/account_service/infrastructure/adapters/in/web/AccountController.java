@@ -81,6 +81,13 @@ public class AccountController {
                 .map(mapper::toDto);
     }
 
+    @GetMapping("/customer/{customerId}")
+    public Flowable<AccountResponseDto> getAccountsByCustomerId(@PathVariable String customerId) {
+        log.info("Fetching accounts for customer: {}", customerId);
+        return accountService.findByCustomerId(customerId)
+                .map(mapper::toDto);
+    }
+
     @PutMapping("/{id}")
     public Single<ResponseEntity<AccountResponseDto>> updateAccount(@PathVariable String id, @Valid @RequestBody AccountRequestDto request) {
         log.info("Updating account metadata for: {}", id);

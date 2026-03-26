@@ -9,4 +9,5 @@ import reactor.core.publisher.Mono;
 public interface ReactiveAccountMongoRepository extends ReactiveMongoRepository<AccountEntity, String> {
     Mono<Long> countByCustomerIdAndType(String customerId, com.flash_loan.bank.account_service.domain.model.AccountType type);
     Mono<AccountEntity> findByDebitCardNumber(String debitCardNumber);
+    reactor.core.publisher.Flux<AccountEntity> findByCustomerId(String customerId);
 }
