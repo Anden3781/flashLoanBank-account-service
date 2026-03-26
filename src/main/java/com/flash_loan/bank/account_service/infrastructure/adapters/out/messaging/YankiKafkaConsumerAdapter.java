@@ -37,8 +37,7 @@ public class YankiKafkaConsumerAdapter {
                     }
                 })
                 .subscribe(
-                        success -> log.info("Successfully updated account for card: {}", cardNumber),
-                        error -> log.error("Failed to update account for card: {}. Error: {}", cardNumber, error.getMessage())
-                );
+                    success -> log.info("Successfully updated account for card: {}", cardNumber),
+                    error -> log.error("Failed to update account for card: {}. Error: {}", cardNumber, error.getMessage()));
     }
 }

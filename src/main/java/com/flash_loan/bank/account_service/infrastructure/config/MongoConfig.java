@@ -3,11 +3,6 @@ package com.flash_loan.bank.account_service.infrastructure.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
-import org.springframework.data.mongodb.core.convert.NoOpDbRefResolver;
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import com.mongodb.reactivestreams.client.MongoClient;
 import org.springframework.core.convert.converter.Converter;
 
 import java.math.BigDecimal;
