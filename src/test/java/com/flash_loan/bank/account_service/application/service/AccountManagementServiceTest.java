@@ -1,9 +1,11 @@
 package com.flash_loan.bank.account_service.application.service;
 
 import com.flash_loan.bank.account_service.domain.exception.BusinessRuleException;
+import com.flash_loan.bank.account_service.domain.exception.CustomerNotFoundException;
 import com.flash_loan.bank.account_service.domain.model.Account;
 import com.flash_loan.bank.account_service.domain.model.AccountType;
 import com.flash_loan.bank.account_service.domain.model.CheckingAccount;
+import com.flash_loan.bank.account_service.domain.model.SavingsAccount;
 import com.flash_loan.bank.account_service.domain.model.enums.CustomerType;
 import com.flash_loan.bank.account_service.domain.ports.out.AccountRepositoryPort;
 import com.flash_loan.bank.account_service.domain.ports.out.CardValidationPort;
@@ -20,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -42,6 +45,32 @@ class AccountManagementServiceTest {
 
     @BeforeEach
     void setUp() {
+    }
+
+    @Test
+    void createSavingsAccount_Success_Vip() {
+        String customerId = "cust-123";
+        when(creditPort.hasOverdueDebt(customerId)).thenReturn(Single.just(false));
+        when(customerPort.getCustomerType(customerId)).thenReturn(Maybe.just(CustomerType.PERSONAL));
+        when(accountPort.countByCustomerIdAndType(customerId, AccountType.SAVINGS)).thenReturn(Single.just(0L));
+        when(cardPort.hasCreditCard(customerId)).thenReturn(Single.just(true));
+        when(accountPort.save(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        Account result = accountService.createSavingsAccount(customerId, new BigDecimal("500.00")).blockingGet();
+
+        assertTrue(result instanceof SavingsAccount);
+        assertTrue(((SavingsAccount) result).getIsVip());
+    }
+
+    @Test
+    void createSavingsAccount_Error_BusinessCustomer() {
+        String customerId = "cust-123";
+        when(creditPort.hasOverdueDebt(customerId)).thenReturn(Single.just(false));
+        when(customerPort.getCustomerType(customerId)).thenReturn(Maybe.just(CustomerType.BUSINESS));
+
+        assertThrows(BusinessRuleException.class, () -> 
+            accountService.createSavingsAccount(customerId, BigDecimal.ZERO).blockingGet()
+        );
     }
 
     @Test
@@ -117,5 +146,28 @@ class AccountManagementServiceTest {
             accountService.createCheckingAccount(customerId, BigDecimal.ZERO).blockingGet()
         );
         verify(accountPort, never()).save(any());
+    }
+
+    @Test
+    void updateBalance_Success() {
+        String id = "acc-123";
+        Account account = new SavingsAccount();
+        account.setBalance(BigDecimal.ZERO);
+        when(accountPort.findById(id)).thenReturn(Maybe.just(account));
+        when(accountPort.save(any())).thenReturn(Single.just(account));
+
+        Account result = accountService.updateBalance(id, BigDecimal.TEN).blockingGet();
+
+        assertThat(result.getBalance()).isEqualTo(BigDecimal.TEN);
+    }
+
+    @Test
+    void deleteAccount_Success() {
+        String id = "acc-123";
+        when(accountPort.deleteById(id)).thenReturn(Single.just(true));
+
+        accountService.deleteAccount(id).blockingAwait();
+
+        verify(accountPort).deleteById(id);
     }
 }
